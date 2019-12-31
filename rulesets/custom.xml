@@ -28,7 +28,7 @@ methods also means that this class has a greater potential impact on derived cla
         </description>
         <priority>3</priority>
         <properties>
-            <property name="maximum" description="The maximum WMC tolerable for a class." value="56"/>
+            <property name="maximum" description="The maximum WMC tolerable for a class." value="57"/>
         </properties>
         <example>
             <![CDATA[

@@ -11,15 +11,17 @@
     "prefer-stable": true,
     "repositories": {},
     "require": {
-        "php": ">=7.1",
+        "php": ">=7.2",
         "ext-mbstring": "*"
     },
     "require-dev": {
-        "codeception/codeception": "^2.5",
+        "codeception/codeception": "^4.0",
+        "codeception/module-asserts": "^1.1",
+        "squizlabs/php_codesniffer": "^3.5",
         "sweetchuck/git-hooks": "^0.0",
-        "sweetchuck/robo-git": "^0.0",
-        "sweetchuck/robo-phpcs": "^0.0",
-        "sweetchuck/robo-phpmd": "^0.0"
+        "sweetchuck/robo-git": "^0.2",
+        "sweetchuck/robo-phpcs": "^0.1",
+        "sweetchuck/robo-phpmd": "^0.1"
     },
     "autoload": {
         "psr-4": {

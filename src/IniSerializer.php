@@ -144,11 +144,6 @@ class IniSerializer
     protected $ini = [];
 
     /**
-     * @var array
-     */
-    protected $iniCurrent = [];
-
-    /**
      * @return $this
      */
     public function setOptions(array $options)
@@ -185,12 +180,11 @@ class IniSerializer
         $data = [];
         $dataGroup =& $data;
 
-        $commentChars = $this->getCommentChars();
         $lines = preg_split('/[\r\n]+/', $ini);
         // @todo Support for multiline values.
         foreach ($lines as $line) {
             $line = trim($line);
-            if (!$line || in_array(mb_substr($line, 0, 1), $commentChars)) {
+            if ($this->isCommentLine($line)) {
                 continue;
             }
 
@@ -218,6 +212,7 @@ class IniSerializer
         foreach ($data as $groupName => $keyValuePairs) {
             if (is_iterable($keyValuePairs)) {
                 $this->emitAddGroup($groupName, $keyValuePairs);
+
                 continue;
             }
 
@@ -352,8 +347,13 @@ class IniSerializer
         return array_unique($values);
     }
 
+    protected function isCommentLine(string $line): bool
+    {
+        return !$line || in_array(mb_substr($line, 0, 1), $this->getCommentChars());
+    }
+
     protected function isGroupHeader(string $line): bool
     {
-        return preg_match('/^\[.*\]$/', $line) === 1;
+        return preg_match('/^\[.*]$/', $line) === 1;
     }
 }
