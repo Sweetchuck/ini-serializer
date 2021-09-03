@@ -7,10 +7,7 @@ namespace Sweetchuck\IniSerializer;
 class IniSerializer
 {
     // region commentChars
-    /**
-     * @var array
-     */
-    protected $commentChars = [';', '#'];
+    protected array $commentChars = [';', '#'];
 
     public function getCommentChars(): array
     {
@@ -29,10 +26,7 @@ class IniSerializer
     // endregion
 
     // region valueNull
-    /**
-     * @var array
-     */
-    protected $valueNull = ['null', 'nil'];
+    protected array $valueNull = ['null', 'nil'];
 
     public function getValueNull(): array
     {
@@ -51,10 +45,7 @@ class IniSerializer
     // endregion
 
     // region valueBoolTrue
-    /**
-     * @var array
-     */
-    protected $valueBoolTrue = ['true', 'on', 'yes'];
+    protected array $valueBoolTrue = ['true', 'on', 'yes'];
 
     public function getValueBoolTrue(): array
     {
@@ -73,10 +64,7 @@ class IniSerializer
     // endregion
 
     // region valueBoolFalse
-    /**
-     * @var array
-     */
-    protected $valueBoolFalse = ['false', 'off', 'no'];
+    protected array $valueBoolFalse = ['false', 'off', 'no'];
 
     public function getValueBoolFalse(): array
     {
@@ -95,10 +83,7 @@ class IniSerializer
     // endregion
 
     // region quoteStrings
-    /**
-     * @var bool
-     */
-    protected $quoteStrings = false;
+    protected bool $quoteStrings = false;
 
     public function getQuoteStrings(): bool
     {
@@ -117,10 +102,7 @@ class IniSerializer
     // endregion
 
     // region spaceAroundEqualSign
-    /**
-     * @var bool
-     */
-    protected $spaceAroundEqualSign = false;
+    protected bool $spaceAroundEqualSign = false;
 
     public function getSpaceAroundEqualSign(): bool
     {
@@ -141,7 +123,7 @@ class IniSerializer
     /**
      * @var string[]
      */
-    protected $ini = [];
+    protected array $ini = [];
 
     /**
      * @return $this
@@ -199,7 +181,7 @@ class IniSerializer
                 continue;
             }
 
-            list($key, $value) = preg_split('/=/', $line, 2) + [1 => ''];
+            [$key, $value] = preg_split('/=/', $line, 2) + [1 => ''];
             $dataGroup[trim($key)] = $this->decodeValue(trim($value));
         }
 
@@ -268,6 +250,9 @@ class IniSerializer
         return strtr($groupName, ['\\x5b' => '[', '\\x5d' => ']']);
     }
 
+    /**
+     * @param mixed $value
+     */
     protected function encodeValue($value): string
     {
         if ($value === null) {

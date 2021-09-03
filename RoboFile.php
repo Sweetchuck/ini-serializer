@@ -1,7 +1,9 @@
 <?php
 
+declare(strict_types = 1);
+
 use Consolidation\AnnotatedCommand\CommandData;
-use League\Container\ContainerInterface;
+use League\Container\Container as LeagueContainer;
 use Robo\Tasks;
 use Robo\Collection\CollectionBuilder;
 use Sweetchuck\LintReport\Reporter\BaseReporter;
@@ -21,59 +23,34 @@ class RoboFile extends Tasks
     use PhpcsTaskLoader;
     use PhpmdTaskLoader;
 
-    /**
-     * @var array
-     */
-    protected $composerInfo = [];
+    protected array $composerInfo = [];
 
-    /**
-     * @var array
-     */
-    protected $codeceptionInfo = [];
+    protected array $codeceptionInfo = [];
 
     /**
      * @var string[]
      */
-    protected $codeceptionSuiteNames = [];
+    protected array $codeceptionSuiteNames = [];
 
-    /**
-     * @var string
-     */
-    protected $packageVendor = '';
+    protected string $packageVendor = '';
 
-    /**
-     * @var string
-     */
-    protected $packageName = '';
+    protected string $packageName = '';
 
-    /**
-     * @var string
-     */
-    protected $binDir = 'vendor/bin';
+    protected string $binDir = 'vendor/bin';
 
-    /**
-     * @var string
-     */
-    protected $gitHook = '';
+    protected string $gitHook = '';
 
-    /**
-     * @var string
-     */
-    protected $envVarNamePrefix = '';
+    protected string $envVarNamePrefix = '';
 
     /**
      * Allowed values: dev, ci, prod.
-     *
-     * @var string
      */
-    protected $environmentType = '';
+    protected string $environmentType = '';
 
     /**
      * Allowed values: local, jenkins, travis, circleci.
-     *
-     * @var string
      */
-    protected $environmentName = '';
+    protected string $environmentName = '';
 
     /**
      * RoboFile constructor.
@@ -88,19 +65,31 @@ class RoboFile extends Tasks
     }
 
     /**
-     * {@inheritdoc}
+     * @hook pre-command @initLintReporters
      */
-    public function setContainer(ContainerInterface $container)
+    public function initLintReporters()
     {
-        if (!$container->has('lintCheckstyleReporter')) {
-            BaseReporter::lintReportConfigureContainer($container);
-        }
+        $lintServices = BaseReporter::getServices();
+        $container = $this->getContainer();
+        foreach ($lintServices as $name => $class) {
+            if ($container->has($name)) {
+                continue;
+            }
 
-        return parent::setContainer($container);
+            if ($container instanceof LeagueContainer) {
+                $container->share($name, $class);
+            }
+        }
     }
 
     /**
      * Git "pre-commit" hook callback.
+     *
+     * @command githook:pre-commit
+     *
+     * @hidden
+     *
+     * @initLintReporters
      */
     public function githookPreCommit(): CollectionBuilder
     {
@@ -124,6 +113,8 @@ class RoboFile extends Tasks
 
     /**
      * Run the Robo unit tests.
+     *
+     * @command test
      */
     public function test(
         array $suiteNames,
@@ -136,6 +127,10 @@ class RoboFile extends Tasks
 
     /**
      * Run code style checkers.
+     *
+     * @command lint
+     *
+     * @initLintReporters
      */
     public function lint(): CollectionBuilder
     {
@@ -146,11 +141,21 @@ class RoboFile extends Tasks
             ->addTask($this->getTaskPhpmdLint());
     }
 
+    /**
+     * @command lint:phpcs
+     *
+     * @initLintReporters
+     */
     public function lintPhpcs(): CollectionBuilder
     {
         return $this->getTaskPhpcsLint();
     }
 
+    /**
+     * @command lint:phpmd
+     *
+     * @initLintReporters
+     */
     public function lintPhpmd(): CollectionBuilder
     {
         return $this->getTaskPhpmdLint();
@@ -178,8 +183,8 @@ class RoboFile extends Tasks
      */
     protected function initEnvironmentTypeAndName()
     {
-        $this->environmentType = getenv($this->getEnvVarName('environment_type'));
-        $this->environmentName = getenv($this->getEnvVarName('environment_name'));
+        $this->environmentType = (string) getenv($this->getEnvVarName('environment_type'));
+        $this->environmentName = (string) getenv($this->getEnvVarName('environment_name'));
 
         if (!$this->environmentType) {
             if (getenv('CI') === 'true') {
@@ -234,12 +239,13 @@ class RoboFile extends Tasks
      */
     protected function initComposerInfo()
     {
-        if ($this->composerInfo || !is_readable('composer.json')) {
+        $composerFileName = getenv('COMPOSER') ?: 'composer.json';
+        if ($this->composerInfo || !is_readable($composerFileName)) {
             return $this;
         }
 
-        $this->composerInfo = json_decode(file_get_contents('composer.json'), true);
-        list($this->packageVendor, $this->packageName) = explode('/', $this->composerInfo['name']);
+        $this->composerInfo = json_decode(file_get_contents($composerFileName), true);
+        [$this->packageVendor, $this->packageName] = explode('/', $this->composerInfo['name']);
 
         if (!empty($this->composerInfo['config']['bin-dir'])) {
             $this->binDir = $this->composerInfo['config']['bin-dir'];
@@ -289,11 +295,11 @@ class RoboFile extends Tasks
     {
         $this->initCodeceptionInfo();
 
-        $withCoverageHtml = in_array($this->environmentType, ['dev']);
-        $withCoverageXml = in_array($this->environmentType, ['ci']);
+        $withCoverageHtml = $this->environmentType === 'dev';
+        $withCoverageXml = $this->environmentType === 'ci';
 
-        $withUnitReportHtml = in_array($this->environmentType, ['dev']);
-        $withUnitReportXml = in_array($this->environmentType, ['ci']);
+        $withUnitReportHtml = $this->environmentType === 'dev';
+        $withUnitReportXml = $this->environmentType === 'ci';
 
         $logDir = $this->getLogDir();
 
@@ -390,7 +396,7 @@ class RoboFile extends Tasks
                         '{command}' => $command,
                     ]
                 ));
-                $process = new Process($command, null, null, null, null);
+                $process = Process::fromShellCommandline($command, null, null, null, null);
                 $exitCode = $process->run(function ($type, $data) {
                     switch ($type) {
                         case Process::OUT:
@@ -446,17 +452,22 @@ class RoboFile extends Tasks
 
     protected function getTaskPhpmdLint()
     {
-        return $this
+        $task = $this
             ->taskPhpmdLintFiles()
             ->setInputFile('./rulesets/custom.include-pattern.txt')
             ->addExcludePathsFromFile('./rulesets/custom.exclude-pattern.txt')
-            ->setRuleSetFileNames(['custom'])
-            ->setOutput($this->output());
+            ->setRuleSetFileNames(['custom']);
+        $task->setOutput($this->output());
+
+        return $task;
     }
 
     protected function isPhpExtensionAvailable(string $extension): bool
     {
-        $command = sprintf('%s -m', escapeshellcmd($this->getPhpExecutable()));
+        $command = [
+            $this->getPhpExecutable(),
+            '-m',
+        ];
 
         $process = new Process($command);
         $exitCode = $process->run();
@@ -469,7 +480,10 @@ class RoboFile extends Tasks
 
     protected function isPhpDbgAvailable(): bool
     {
-        $command = sprintf('%s -qrr', escapeshellcmd($this->getPhpdbgExecutable()));
+        $command = [
+            $this->getPhpdbgExecutable(),
+            '-qrr',
+        ];
 
         return (new Process($command))->run() === 0;
     }
@@ -488,15 +502,14 @@ class RoboFile extends Tasks
         if (!$this->codeceptionSuiteNames) {
             $this->initCodeceptionInfo();
 
-            /** @var \Symfony\Component\Finder\Finder $suiteFiles */
             $suiteFiles = Finder::create()
                 ->in($this->codeceptionInfo['paths']['tests'])
                 ->files()
-                ->name('*.suite.yml')
+                ->name('*.suite.dist.yml')
                 ->depth(0);
 
             foreach ($suiteFiles as $suiteFile) {
-                $this->codeceptionSuiteNames[] = $suiteFile->getBasename('.suite.yml');
+                $this->codeceptionSuiteNames[] = $suiteFile->getBasename('.suite.dist.yml');
             }
         }
 
