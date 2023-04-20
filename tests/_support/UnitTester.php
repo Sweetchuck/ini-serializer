@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Sweetchuck\IniSerializer\Test;
+namespace Sweetchuck\IniSerializer\Tests;
 
-use Sweetchuck\IniSerializer\Test\_generated\UnitTesterActions;
+use Sweetchuck\IniSerializer\Tests\_generated\UnitTesterActions;
 
 /**
  * Inherited Methods

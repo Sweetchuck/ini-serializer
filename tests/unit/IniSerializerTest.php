@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Sweetchuck\IniSerializer\Test\Unit;
+namespace Sweetchuck\IniSerializer\Tests\Unit;
 
 use Sweetchuck\IniSerializer\IniSerializer;
 

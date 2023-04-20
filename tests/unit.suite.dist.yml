@@ -3,4 +3,4 @@ class_name: 'UnitTester'
 modules:
     enabled:
         - 'Asserts'
-        - '\Sweetchuck\IniSerializer\Test\Helper\Unit'
+        - '\Sweetchuck\IniSerializer\Tests\Helper\Unit'
