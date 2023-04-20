@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Sweetchuck\IniSerializer\Test\Helper;
+namespace Sweetchuck\IniSerializer\Tests\Helper;
 
 use Codeception\Module;
 

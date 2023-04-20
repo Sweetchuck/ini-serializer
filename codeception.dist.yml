@@ -1,13 +1,14 @@
 
-namespace: Sweetchuck\IniSerializer\Test
+namespace: 'Sweetchuck\IniSerializer\Tests'
 
-actor: Tester
+actor: 'Tester'
 
 paths:
-    tests: tests
-    output: tests/_output
-    support: tests/_support
-    data: tests/_data
+    tests: 'tests'
+    data: 'tests/_data'
+    envs: 'tests/_envs'
+    output: 'tests/_output'
+    support: 'tests/_support'
 
 bootstrap: '_bootstrap.php'
 settings:
