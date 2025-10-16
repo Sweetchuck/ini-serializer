@@ -4,22 +4,26 @@ declare(strict_types = 1);
 
 namespace Sweetchuck\IniSerializer\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use Sweetchuck\IniSerializer\IniSerializer;
 
-/**
- * @covers \Sweetchuck\IniSerializer\IniSerializer
- */
-class IniSerializerTest extends \Codeception\Test\Unit
+#[CoversClass(IniSerializer::class)]
+class IniSerializerTest extends TestCase
 {
-    public function casesParse(): array
+    /**
+     * @return array<string, mixed>
+     */
+    public static function casesParse(): array
     {
         return [
             'empty' => [
-                [],
-                '',
+                'expected' => [],
+                'ini' => '',
             ],
             'all-in-one' => [
-                [
+                'expected' => [
                     'a' => 'b',
                     'c' => 'd',
                     'e' => 'f',
@@ -39,7 +43,7 @@ class IniSerializerTest extends \Codeception\Test\Unit
                         's' => '',
                     ],
                 ],
-                implode(PHP_EOL, [
+                'ini' => implode(PHP_EOL, [
                     'a = b',
                     'c= d',
                     'e =f',
@@ -65,18 +69,22 @@ class IniSerializerTest extends \Codeception\Test\Unit
     }
 
     /**
-     * @dataProvider casesParse
+     * @param array<string, mixed> $expected
      */
+    #[DataProvider('casesParse')]
     public function testParse(array $expected, string $ini): void
     {
         static::assertSame($expected, (new IniSerializer())->parse($ini));
     }
 
-    public function casesEmit(): array
+    /**
+     * @return array<string, mixed>
+     */
+    public static function casesEmit(): array
     {
         return [
             'basic' => [
-                implode(PHP_EOL, [
+                'expected' => implode(PHP_EOL, [
                     'a=b',
                     '',
                     '[c]',
@@ -96,7 +104,7 @@ class IniSerializerTest extends \Codeception\Test\Unit
                     'r=s',
                     '',
                 ]),
-                [
+                'data' => [
                     'a' => 'b',
                     'c' => [],
                     '.d' => [
@@ -116,24 +124,24 @@ class IniSerializerTest extends \Codeception\Test\Unit
                 ],
             ],
             'quoteStrings; spaceAroundEqualSign' => [
-                implode(PHP_EOL, [
+                'expected' => implode(PHP_EOL, [
                     'a = "b"',
                     '',
                 ]),
-                [
+                'data' => [
                     'a' => 'b',
                 ],
-                [
+                'options' => [
                     'quoteStrings' => true,
                     'spaceAroundEqualSign' => true,
                 ],
             ],
             'protectedValues' => [
-                implode(PHP_EOL, [
+                'expected' => implode(PHP_EOL, [
                     'a="true"',
                     '',
                 ]),
-                [
+                'data' => [
                     'a' => 'true',
                 ],
             ],
@@ -141,8 +149,10 @@ class IniSerializerTest extends \Codeception\Test\Unit
     }
 
     /**
-     * @dataProvider casesEmit
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $options
      */
+    #[DataProvider('casesEmit')]
     public function testEmit(string $expected, array $data, array $options = []): void
     {
         $serializer = new IniSerializer();

@@ -4,20 +4,29 @@ declare(strict_types = 1);
 
 namespace Sweetchuck\IniSerializer;
 
+/**
+ * @phpstan-import-type SweetchuckIniSerializerOptions from \Sweetchuck\IniSerializer\Phpstan
+ */
 class IniSerializer
 {
     // region commentChars
+    /**
+     * @var array<string>
+     */
     protected array $commentChars = [';', '#'];
 
+    /**
+     * @return array<string>
+     */
     public function getCommentChars(): array
     {
         return $this->commentChars;
     }
 
     /**
-     * @return $this
+     * @param array<string> $commentChars
      */
-    public function setCommentChars(array $commentChars)
+    public function setCommentChars(array $commentChars): static
     {
         $this->commentChars = $commentChars;
 
@@ -26,17 +35,23 @@ class IniSerializer
     // endregion
 
     // region valueNull
+    /**
+     * @var array<string>
+     */
     protected array $valueNull = ['null', 'nil'];
 
+    /**
+     * @return array<string>
+     */
     public function getValueNull(): array
     {
         return $this->valueNull;
     }
 
     /**
-     * @return $this
+     * @param array<string> $valueNull
      */
-    public function setValueNull(array $valueNull)
+    public function setValueNull(array $valueNull): static
     {
         $this->valueNull = $valueNull;
 
@@ -45,17 +60,23 @@ class IniSerializer
     // endregion
 
     // region valueBoolTrue
+    /**
+     * @var array<string>
+     */
     protected array $valueBoolTrue = ['true', 'on', 'yes'];
 
+    /**
+     * @return array<string>
+     */
     public function getValueBoolTrue(): array
     {
         return $this->valueBoolTrue;
     }
 
     /**
-     * @return $this
+     * @param array<string> $valueBoolTrue
      */
-    public function setValueBoolTrue(array $valueBoolTrue)
+    public function setValueBoolTrue(array $valueBoolTrue): static
     {
         $this->valueBoolTrue = $valueBoolTrue;
 
@@ -64,17 +85,23 @@ class IniSerializer
     // endregion
 
     // region valueBoolFalse
+    /**
+     * @var array<string>
+     */
     protected array $valueBoolFalse = ['false', 'off', 'no'];
 
+    /**
+     * @return array<string>
+     */
     public function getValueBoolFalse(): array
     {
         return $this->valueBoolFalse;
     }
 
     /**
-     * @return $this
+     * @param array<string> $valueBoolFalse
      */
-    public function setValueBoolFalse(array $valueBoolFalse)
+    public function setValueBoolFalse(array $valueBoolFalse): static
     {
         $this->valueBoolFalse = $valueBoolFalse;
 
@@ -90,10 +117,7 @@ class IniSerializer
         return $this->quoteStrings;
     }
 
-    /**
-     * @return $this
-     */
-    public function setQuoteStrings(bool $quoteStrings)
+    public function setQuoteStrings(bool $quoteStrings): static
     {
         $this->quoteStrings = $quoteStrings;
 
@@ -109,10 +133,7 @@ class IniSerializer
         return $this->spaceAroundEqualSign;
     }
 
-    /**
-     * @return $this
-     */
-    public function setSpaceAroundEqualSign(bool $spaceAroundEqualSign)
+    public function setSpaceAroundEqualSign(bool $spaceAroundEqualSign): static
     {
         $this->spaceAroundEqualSign = $spaceAroundEqualSign;
 
@@ -121,14 +142,14 @@ class IniSerializer
     // endregion
 
     /**
-     * @var string[]
+     * @var array<string>
      */
     protected array $ini = [];
 
     /**
-     * @return $this
+     * @phpstan-param SweetchuckIniSerializerOptions $options
      */
-    public function setOptions(array $options)
+    public function setOptions(array $options): static
     {
         if (array_key_exists('commentChars', $options)) {
             $this->setCommentChars($options['commentChars']);
@@ -157,12 +178,19 @@ class IniSerializer
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function parse(string $ini): array
     {
         $data = [];
         $dataGroup =& $data;
 
         $lines = preg_split('/[\r\n]+/', $ini);
+        if ($lines === false) {
+            return $data;
+        }
+
         // @todo Support for multiline values.
         foreach ($lines as $line) {
             $line = trim($line);
@@ -181,13 +209,16 @@ class IniSerializer
                 continue;
             }
 
-            [$key, $value] = preg_split('/=/', $line, 2) + [1 => ''];
+            [$key, $value] = explode('=', $line, 2) + [1 => ''];
             $dataGroup[trim($key)] = $this->decodeValue(trim($value));
         }
 
         return $data;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function emit(array $data): string
     {
         $this->ini = [];
@@ -209,7 +240,10 @@ class IniSerializer
         return $string;
     }
 
-    protected function emitAddGroup(string $groupName, iterable $keyValuePairs)
+    /**
+     * @param iterable<string, mixed> $keyValuePairs
+     */
+    protected function emitAddGroup(string $groupName, iterable $keyValuePairs): static
     {
         $this->emitEnsureEmptyLine();
         $this->ini[] = sprintf('[%s]', $this->encodeGroupName($groupName));
@@ -223,7 +257,7 @@ class IniSerializer
         return $this;
     }
 
-    protected function emitAddKeyValue(string $key, $value)
+    protected function emitAddKeyValue(string $key, mixed $value): static
     {
         $pattern = $this->getSpaceAroundEqualSign() ? '%s = %s' : '%s=%s';
         $this->ini[] = sprintf($pattern, $key, $this->encodeValue($value));
@@ -231,7 +265,7 @@ class IniSerializer
         return $this;
     }
 
-    protected function emitEnsureEmptyLine()
+    protected function emitEnsureEmptyLine(): static
     {
         if ($this->ini && end($this->ini) !== '') {
             $this->ini[] = '';
@@ -250,10 +284,7 @@ class IniSerializer
         return strtr($groupName, ['\\x5b' => '[', '\\x5d' => ']']);
     }
 
-    /**
-     * @param mixed $value
-     */
-    protected function encodeValue($value): string
+    protected function encodeValue(mixed $value): string
     {
         if ($value === null) {
             return $this->getValueNull()[0];
@@ -281,10 +312,7 @@ class IniSerializer
         return $value;
     }
 
-    /**
-     * @return mixed
-     */
-    protected function decodeValue(string $input)
+    protected function decodeValue(string $input): mixed
     {
         // @todo Support for octal and hexadecimal numbers.
         if (is_numeric($input)) {
@@ -315,7 +343,7 @@ class IniSerializer
     }
 
     /**
-     * @return string[]
+     * @return array<string>
      */
     protected function getProtectedValues(): array
     {

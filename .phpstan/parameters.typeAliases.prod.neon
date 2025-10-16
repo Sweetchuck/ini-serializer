@@ -1,0 +1,12 @@
+parameters:
+	typeAliases:
+		sweetchuck-ini-serializer-options: '''
+			array{
+				commentChars?: array<string>,
+				valueNull?: array<string>,
+				valueBoolTrue?: array<string>,
+				valueBoolFalse?: array<string>,
+				quoteStrings?: bool,
+				spaceAroundEqualSign?: bool,
+			}
+		'''

@@ -1,6 +1,8 @@
-
 php:
     executables:
         php_min:
             enabled: true
-            command: 'php -d "assert.exception=1"'
+            command:
+                - 'php'
+                - '-d'
+                - 'assert.exception=1'

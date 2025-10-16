@@ -1,0 +1,101 @@
+name: 'QA'
+
+on:
+    push:
+        branches:
+            - '**'
+    pull_request:
+        branches:
+            - '**'
+
+env:
+    SHELL: '/bin/bash'
+    COMPOSER_NO_INTERACTION: '1'
+    COMPOSER_MEMORY_LIMIT: '-1'
+    COMPOSER_DISABLE_XDEBUG_WARN: '1'
+
+jobs:
+    build:
+        runs-on: 'ubuntu-latest'
+        steps:
+            -
+                uses: 'actions/checkout@v4'
+            -
+                name: 'Setup PHP'
+                uses: 'shivammathur/setup-php@v2'
+                with:
+                    php-version: '8.4'
+                    tools: 'composer:v2'
+            -
+                name: 'Composer install'
+                uses: 'ramsey/composer-install@v2'
+
+    lint:
+        needs: 'build'
+        runs-on: 'ubuntu-latest'
+        steps:
+            -
+                uses: 'actions/checkout@v4'
+            -
+                name: 'Setup PHP'
+                uses: 'shivammathur/setup-php@v2'
+                with:
+                    php-version: '8.4'
+                    tools: 'composer:v2'
+            -
+                name: 'Composer install'
+                uses: 'ramsey/composer-install@v2'
+            -
+                name: Run linters
+                run: |
+                    "$(composer config bin-dir)/robo" --ansi build
+                    "$(composer config bin-dir)/robo" --ansi lint
+
+    test:
+        needs: 'build'
+        runs-on: 'ubuntu-latest'
+        strategy:
+            matrix:
+                php-version:
+                    - '8.4'
+        name: "Test PHP ${{ matrix.php-version }}"
+        steps:
+            -
+                uses: 'actions/checkout@v4'
+            -
+                name: 'Setup PHP'
+                uses: 'shivammathur/setup-php@v2'
+                with:
+                    php-version: "${{ matrix.php-version }}"
+                    tools: 'composer:v2'
+                    extensions: 'pcov'
+                    coverage: 'pcov'
+            -
+                name: 'Upgrade Git to the latest available version'
+                run: |
+                    sudo apt-get update --allow-releaseinfo-change
+                    sudo apt-get install git
+            -
+                name: 'Setup Git configuration'
+                run: |
+                    git config --global 'user.email' 'github-action@example.com'
+                    git config --global 'user.name'  "GitHub Action ${GITHUB_ACTOR}"
+            -
+                name: 'Composer install'
+                uses: 'ramsey/composer-install@v2'
+            -
+                name: 'Run unit tests'
+                run: |-
+                    "$(composer config bin-dir)/robo" --ansi test unit
+            -
+                name: 'Upload unit test coverage to Codecov'
+                uses: 'codecov/codecov-action@v3'
+                with:
+                    directory: './reports/machine/unit/coverage/'
+                    flags: 'unit'
+            -
+                name: 'Store unit test results'
+                uses: 'actions/upload-artifact@v4'
+                with:
+                    name: "unit-test-results-php-${{ matrix.php-version }}"
+                    path: './reports/machine/unit/result/junit.xml'

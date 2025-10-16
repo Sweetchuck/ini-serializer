@@ -1,11 +1,38 @@
-/tests/_output/
-/tests/_support/_generated/
-/tests/*.suite.yml
-/codeception.yml
+### Common.
+/.cache/
+/reports/
 
 
+### Composer.
 /vendor/
+/sweetchuck-ini-serializer-*.tar
+/sweetchuck-ini-serializer-*.tar.bz2
+/sweetchuck-ini-serializer-*.tar.gz
+/sweetchuck-ini-serializer-*.zip
 
-/.git-hooks.local
 
+### Composer Suite.
+/.composer-suite/
+/composer.local.json
+/composer.local.lock
+
+
+### PHPUnit.
+/phpunit.xml
+
+
+### PHP Code Sniffer.
+/phpcs.xml
+
+
+### PHPStan.
+/tests/src/Phpstan.php
+/phpstan.neon
+
+
+### Robo.
 /robo.yml
+
+
+### sweetchuck/git-hooks.
+/.git-hooks.local
